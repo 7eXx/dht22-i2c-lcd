@@ -53,8 +53,8 @@ void loop() {
 
   display.clearDisplay();
   displayTempHum();
-  displayMinMaxTemp();
-  displayMinMaxHum();
+  displayMinTempHum();
+  displayMaxTempHum();
   display.display();
 
   delay(500);
@@ -86,28 +86,32 @@ void displayTempHum() {
   display.print("Humidity: ");
   display.print(hum);
   display.print(" %");
+
+  display.drawLine(0, 20, display.width() - 1, 20, SSD1306_WHITE);
 }
 
-void displayMinMaxTemp() {
-  display.setCursor(0, 20);
+void displayMinTempHum() {
+  display.setCursor(0, 23);
+  display.print("Min Temp: ");
+  display.print(minTemp);
+  display.print(" C");
+
+  display.setCursor(0, 33);
+  display.print("Min Hum: ");
+  display.print(minHum);
+  display.print(" %");
+
+  display.drawLine(0, 43, display.width() - 1, 43, SSD1306_WHITE);
+}
+
+void displayMaxTempHum() {
+  display.setCursor(0, 46);
   display.print("Max Temp: ");
   display.print(maxTemp);
   display.print(" C");
 
-  display.setCursor(0, 30);
-  display.print("Min Temp: ");
-  display.print(minTemp);
-  display.print(" C");
-}
-
-void displayMinMaxHum() {
-  display.setCursor(0, 40);
+  display.setCursor(0, 56);
   display.print("Max Hum: ");
   display.print(maxHum);
-  display.print(" %");
-
-  display.setCursor(0, 50);
-  display.print("Min Hum: ");
-  display.print(minHum);
   display.print(" %");
 }
