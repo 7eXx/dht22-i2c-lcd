@@ -19,8 +19,14 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define DHTPIN 4
 #define DHTTYPE DHT22
 
-unsigned long previousMillis = 0;
-const unsigned long delayMS = 2000;
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+unsigned long prevMqttUpdateMillis = 0;
+const unsigned long mqtt
+
+unsigned long prevReadMillis = 0;
+const unsigned long delayReadMS = 2000;
 
 float hum = 0;  //Variabile in cui verrà inserita la % di umidità  
 float temp = 0; //Variabile in cui verrà inserita la temperatura
@@ -36,9 +42,14 @@ void setup() {
 
   setupDisplay();
   setupWifi();
+  // setup mqtt server
+  client.setServer(mqtt_server, mqtt_port);
 }
 
 void loop() {
+  tryReconnect();
+  client.loop();
+
   updateReadValues();
 
   display.clearDisplay();
@@ -46,6 +57,8 @@ void loop() {
   displayMinTempHum();
   displayMaxTempHum();
   display.display();
+
+  tryPublishUpdates();
 
   delay(500);
 }
@@ -89,10 +102,30 @@ void setupWifi() {
   delay(5000);
 }
 
+void tryReconnect() {
+  if (client.connected()) {
+    return;
+  }
+
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    String clientId = "ESP32Client-" + String(random(0xffff), HEX);
+    if (client.connect(clientId.c_str())) {
+      Serial.println("connected");
+      // client.subscribe("your/topic"); // optional
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" retrying in 5 seconds...");
+      delay(5000);
+    }
+  }
+}
+
 void updateReadValues() {
   unsigned long currentMillis = millis();
-  if (currentMillis - previousMillis >= delayMS) {
-    previousMillis = currentMillis;
+  if (currentMillis - prevReadMillis >= delayReadMS) {
+    prevReadMillis = currentMillis;
     // read humidity and temperature
     hum = dht.readHumidity();
     temp = dht.readTemperature();
@@ -143,4 +176,23 @@ void displayMaxTempHum() {
   display.print("Max Hum: ");
   display.print(maxHum);
   display.print(" %");
+}
+
+void tryPublishUpdates() {
+  if (!client.connected()) {
+    return;
+  }
+
+  unsigned long now = millis();
+  if (now - prevMqttUpdateMillis > delayReadMS) {
+    prevMqttUpdateMillis = now;
+    // Convert the value to a char array
+    char tempString[8];
+    dtostrf(temp, 1, 2, tempString);
+    client.publish("esp32/temperature", tempString);
+    // Convert the value to a char array
+    char humString[8];
+    dtostrf(hum, 1, 2, humString);
+    client.publish("esp32/humidity", humString);
+  }
 }
