@@ -5,6 +5,9 @@
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_Sensor.h>
 #include <DHT.h>
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include "config.h"
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
@@ -31,6 +34,23 @@ void setup() {
   // initialize dht sensor
   dht.begin();
 
+  setupDisplay();
+  setupWifi();
+}
+
+void loop() {
+  updateReadValues();
+
+  display.clearDisplay();
+  displayTempHum();
+  displayMinTempHum();
+  displayMaxTempHum();
+  display.display();
+
+  delay(500);
+}
+
+void setupDisplay() {
   // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
   if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
     Serial.println(F("SSD1306 allocation failed"));
@@ -48,16 +68,25 @@ void setup() {
   display.setTextColor(SSD1306_WHITE); // Colore testo
 }
 
-void loop() {
-  updateReadValues();
-
+void setupWifi() {
   display.clearDisplay();
-  displayTempHum();
-  displayMinTempHum();
-  displayMaxTempHum();
+  delay(10);
+  display.println("Connecting to WiFi...");
   display.display();
+  WiFi.begin(ssid, password);
 
-  delay(500);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    display.print(".");
+    display.display();
+  }
+
+  display.println("");
+  display.println("Connected to WiFi."); 
+  display.print("IP: ");
+  display.println(WiFi.localIP());
+  display.display();
+  delay(5000);
 }
 
 void updateReadValues() {
