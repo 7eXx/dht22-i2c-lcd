@@ -23,10 +23,10 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 
 unsigned long prevMqttUpdateMillis = 0;
-const unsigned long mqtt
+const unsigned long mqttUpdateDelayMs = 3000;
 
 unsigned long prevReadMillis = 0;
-const unsigned long delayReadMS = 2000;
+const unsigned long readDelayMs = 2000;
 
 float hum = 0;  //Variabile in cui verrà inserita la % di umidità  
 float temp = 0; //Variabile in cui verrà inserita la temperatura
@@ -88,21 +88,36 @@ void setupWifi() {
   display.display();
   WiFi.begin(ssid, password);
 
-  while (WiFi.status() != WL_CONNECTED) {
+  unsigned short retry = 0;
+  while (WiFi.status() != WL_CONNECTED && retry < 20) {
     delay(500);
     display.print(".");
     display.display();
+    retry++;
   }
 
-  display.println("");
-  display.println("Connected to WiFi."); 
-  display.print("IP: ");
-  display.println(WiFi.localIP());
+  if (WiFi.status() == WL_CONNECTED) {
+    display.println("");
+    display.println("Connected to WiFi."); 
+    display.print("IP: ");
+    display.println(WiFi.localIP());
+    Serial.println("WiFi Connected!");
+  } else {
+    display.println("");
+    display.println("WiFi not connected.");
+    Serial.println("WiFi not connected");
+  }
+  
   display.display();
   delay(5000);
 }
 
 void tryReconnect() {
+  // wifi not connected
+  if (WiFi.isConnected() != WL_CONNECTED) {
+    return;
+  }
+  // broken already connected
   if (client.connected()) {
     return;
   }
@@ -124,7 +139,7 @@ void tryReconnect() {
 
 void updateReadValues() {
   unsigned long currentMillis = millis();
-  if (currentMillis - prevReadMillis >= delayReadMS) {
+  if (currentMillis - prevReadMillis >= readDelayMs) {
     prevReadMillis = currentMillis;
     // read humidity and temperature
     hum = dht.readHumidity();
@@ -179,12 +194,17 @@ void displayMaxTempHum() {
 }
 
 void tryPublishUpdates() {
+  // wifi is not connected
+  if (WiFi.isConnected() != WL_CONNECTED) {
+    return;
+  }
+  // broker mqtt not connected
   if (!client.connected()) {
     return;
   }
 
   unsigned long now = millis();
-  if (now - prevMqttUpdateMillis > delayReadMS) {
+  if (now - prevMqttUpdateMillis > mqttUpdateDelayMs) {
     prevMqttUpdateMillis = now;
     // Convert the value to a char array
     char tempString[8];
