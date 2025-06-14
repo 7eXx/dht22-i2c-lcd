@@ -22,6 +22,9 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 WiFiClient espClient;
 PubSubClient client(espClient);
 
+unsigned long prevMqttConnectionMillis = 0;
+const unsigned long mqttConnectionMillis = 5000;
+
 unsigned long prevMqttUpdateMillis = 0;
 const unsigned long mqttUpdateDelayMs = 3000;
 
@@ -114,7 +117,7 @@ void setupWifi() {
 
 void tryReconnect() {
   // wifi not connected
-  if (WiFi.isConnected() != WL_CONNECTED) {
+  if (WiFi.status() != WL_CONNECTED) {
     return;
   }
   // broken already connected
@@ -122,7 +125,9 @@ void tryReconnect() {
     return;
   }
 
-  while (!client.connected()) {
+  unsigned long currentMillis = millis();
+  if (currentMillis - prevMqttConnectionMillis > mqttConnectionMillis) {
+    prevMqttConnectionMillis = currentMillis;
     Serial.print("Attempting MQTT connection...");
     String clientId = "ESP32Client-" + String(random(0xffff), HEX);
     if (client.connect(clientId.c_str())) {
@@ -131,8 +136,7 @@ void tryReconnect() {
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
-      Serial.println(" retrying in 5 seconds...");
-      delay(5000);
+      Serial.println(" retrying next time...");
     }
   }
 }
@@ -195,7 +199,7 @@ void displayMaxTempHum() {
 
 void tryPublishUpdates() {
   // wifi is not connected
-  if (WiFi.isConnected() != WL_CONNECTED) {
+  if (WiFi.status() != WL_CONNECTED) {
     return;
   }
   // broker mqtt not connected
