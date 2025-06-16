@@ -7,13 +7,13 @@
 #include <DHT.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
-#include "config.h"
+#include "setupDisplay.h"
+#include "setupWifi.h"
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
-#define SCREEN_ADDRESS 0x3C // Crea un oggetto display con l'indirizzo I2C (tipicamente 0x3C)
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 #define DHTPIN 4
@@ -43,8 +43,8 @@ void setup() {
   // initialize dht sensor
   dht.begin();
 
-  setupDisplay();
-  setupWifi();
+  setupDisplay(display);
+  setupWifi(display);
   // setup mqtt server
   client.setServer(mqtt_server, mqtt_port);
 }
@@ -64,55 +64,6 @@ void loop() {
   tryPublishUpdates();
 
   delay(500);
-}
-
-void setupDisplay() {
-  // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
-  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-    Serial.println(F("SSD1306 allocation failed"));
-    for(;;); // Don't proceed, loop forever
-  }
-
-  // Show initial display buffer contents on the screen --
-  // the library initializes this with an Adafruit splash screen.
-  display.display();
-  delay(2000); // Pause for 2 seconds
-
-  // Clear the buffer
-  display.clearDisplay();
-  display.setTextSize(1);      // Dimensione testo
-  display.setTextColor(SSD1306_WHITE); // Colore testo
-}
-
-void setupWifi() {
-  display.clearDisplay();
-  delay(10);
-  display.println("Connecting to WiFi...");
-  display.display();
-  WiFi.begin(ssid, password);
-
-  unsigned short retry = 0;
-  while (WiFi.status() != WL_CONNECTED && retry < 20) {
-    delay(500);
-    display.print(".");
-    display.display();
-    retry++;
-  }
-
-  if (WiFi.status() == WL_CONNECTED) {
-    display.println("");
-    display.println("Connected to WiFi."); 
-    display.print("IP: ");
-    display.println(WiFi.localIP());
-    Serial.println("WiFi Connected!");
-  } else {
-    display.println("");
-    display.println("WiFi not connected.");
-    Serial.println("WiFi not connected");
-  }
-  
-  display.display();
-  delay(5000);
 }
 
 void tryReconnect() {
