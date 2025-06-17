@@ -4,15 +4,12 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_Sensor.h>
-#include <DHT.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
-#include "setupDisplay.h"
+#include "displayManager.h"
 #include "setupWifi.h"
+#include "sensorManager.h"
 #include "config.h"
-
-#define DHTPIN 4
-#define DHTTYPE DHT22
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -23,20 +20,10 @@ const unsigned long mqttConnectionMillis = 5000;
 unsigned long prevMqttUpdateMillis = 0;
 const unsigned long mqttUpdateDelayMs = 3000;
 
-unsigned long prevReadMillis = 0;
-const unsigned long readDelayMs = 2000;
-
-float hum = 0;  //Variabile in cui verrà inserita la % di umidità  
-float temp = 0; //Variabile in cui verrà inserita la temperatura
-float minTemp = 1000, maxTemp = -1000;
-float minHum = 1000, maxHum = -1000;
-
-DHT dht(DHTPIN, DHTTYPE); 
-
 void setup() {
   Serial.begin(9600);
   // initialize dht sensor
-  dht.begin();
+  dhtBegin();
 
   setupDisplay(display);
   setupWifi(display);
@@ -49,12 +36,7 @@ void loop() {
   client.loop();
 
   updateReadValues();
-
-  display.clearDisplay();
-  displayTempHum();
-  displayMinTempHum();
-  displayMaxTempHum();
-  display.display();
+  renderDisplay();
 
   tryPublishUpdates();
 
@@ -87,61 +69,7 @@ void tryReconnect() {
   }
 }
 
-void updateReadValues() {
-  unsigned long currentMillis = millis();
-  if (currentMillis - prevReadMillis >= readDelayMs) {
-    prevReadMillis = currentMillis;
-    // read humidity and temperature
-    hum = dht.readHumidity();
-    temp = dht.readTemperature();
 
-    if (temp < minTemp) minTemp = temp;
-    if (temp > maxTemp) maxTemp = temp;
-
-    if (hum < minHum) minHum = hum;
-    if (hum > maxHum) maxHum = hum;
-  }
-}
-
-void displayTempHum() {
-  display.setCursor(0, 0);
-  display.print("Temperature: ");
-  display.print(temp);
-  display.print(" C");
-
-  display.setCursor(0,10);
-  display.print("Humidity: ");
-  display.print(hum);
-  display.print(" %");
-
-  display.drawLine(0, 20, display.width() - 1, 20, SSD1306_WHITE);
-}
-
-void displayMinTempHum() {
-  display.setCursor(0, 23);
-  display.print("Min Temp: ");
-  display.print(minTemp);
-  display.print(" C");
-
-  display.setCursor(0, 33);
-  display.print("Min Hum: ");
-  display.print(minHum);
-  display.print(" %");
-
-  display.drawLine(0, 43, display.width() - 1, 43, SSD1306_WHITE);
-}
-
-void displayMaxTempHum() {
-  display.setCursor(0, 46);
-  display.print("Max Temp: ");
-  display.print(maxTemp);
-  display.print(" C");
-
-  display.setCursor(0, 56);
-  display.print("Max Hum: ");
-  display.print(maxHum);
-  display.print(" %");
-}
 
 void tryPublishUpdates() {
   // wifi is not connected
@@ -158,11 +86,11 @@ void tryPublishUpdates() {
     prevMqttUpdateMillis = now;
     // Convert the value to a char array
     char tempString[8];
-    dtostrf(temp, 1, 2, tempString);
+    dtostrf(getMaxTemperature(), 1, 2, tempString);
     client.publish("esp32/temperature", tempString);
     // Convert the value to a char array
     char humString[8];
-    dtostrf(hum, 1, 2, humString);
+    dtostrf(getHumidity(), 1, 2, humString);
     client.publish("esp32/humidity", humString);
   }
 }
