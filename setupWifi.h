@@ -2,7 +2,9 @@
 #define SETUP_WIFI_H
 
 #include <Adafruit_SSD1306.h>
+#include <WiFi.h>
+#include <displayManager.h>
 
-void setupWifi(Adafruit_SSD1306 &display);
+void setupWifi();
 
 #endif

@@ -5,7 +5,7 @@
 
 extern Adafruit_SSD1306 display;
 
-void setupDisplay(Adafruit_SSD1306 &display);
+void setupDisplay();
 void renderDisplay();
 
 #endif

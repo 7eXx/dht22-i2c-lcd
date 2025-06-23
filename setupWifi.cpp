@@ -1,11 +1,10 @@
 #include "setupWifi.h"
-#include <WiFi.h>
 
 // Replace with your WiFi credentials
 const char* ssid = "";
 const char* password = "";
 
-void setupWifi(Adafruit_SSD1306 &display) {
+void setupWifi() {
   display.clearDisplay();
   delay(10);
   display.println("Connecting to WiFi...");
