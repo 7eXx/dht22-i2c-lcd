@@ -63,7 +63,7 @@ void tryPublishUpdates() {
     prevMqttUpdateMillis = now;
     // Convert the value to a char array
     char tempString[8];
-    dtostrf(getMaxTemperature(), 1, 2, tempString);
+    dtostrf(getTemperature(), 1, 2, tempString);
     client.publish("esp32/temperature", tempString);
     // Convert the value to a char array
     char humString[8];
