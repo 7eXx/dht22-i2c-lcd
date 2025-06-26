@@ -1,6 +1,4 @@
-#include "Arduino.h"
 #include "mqttManager.h"
-#include "sensorManager.h"
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -64,10 +62,21 @@ void tryPublishUpdates() {
   if (now - prevMqttUpdateMillis > mqttUpdateDelayMs) {
     prevMqttUpdateMillis = now;
 
+    // Convert the value to a char array
+    char tempString[8], humString[8];
+    dtostrf(getTemperature(), 1, 2, tempString);
+    dtostrf(getHumidity(), 1, 2, humString);
+    
     // Json structure
     StaticJsonDocument<200> doc;
-    doc["temperature"] = getTemperature();
-    doc["humidity"] = getHumidity();
+    
+    JsonObject temp = doc.createNestedObject("temperature");
+    temp["value"] = tempString;
+    temp["unit"] = "°C";
+
+    JsonObject hum = doc.createNestedObject("humidity");
+    hum["value"] = humString;
+    hum["unit"] = "%";
 
     char buffer[256];
     serializeJson(doc, buffer);

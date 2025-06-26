@@ -1,5 +1,4 @@
 #include "sensorManager.h"
-#include <DHT.h>
 
 #define DHTPIN 4
 #define DHTTYPE DHT22

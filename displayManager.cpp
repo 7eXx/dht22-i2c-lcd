@@ -1,6 +1,4 @@
 #include "displayManager.h"
-#include "sensorManager.h"
-#include <Adafruit_GFX.h>
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64

@@ -1,5 +1,3 @@
-#include "secrets.h"
-#include "WiFiType.h"
 #include "setupWifi.h"
 
 void setupWifi() {
