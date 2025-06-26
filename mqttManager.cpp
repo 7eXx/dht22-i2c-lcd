@@ -1,3 +1,4 @@
+#include "Arduino.h"
 #include "mqttManager.h"
 #include "sensorManager.h"
 
@@ -6,6 +7,7 @@ PubSubClient client(espClient);
 
 const char* mqtt_server = "mosquitto.raspi-home";
 const int mqtt_port = 1883;
+const char* mqtt_topic = "esp32/sensors";
 
 unsigned long prevMqttConnectionMillis = 0;
 const unsigned long mqttConnectionMillis = 5000;
@@ -61,13 +63,15 @@ void tryPublishUpdates() {
   unsigned long now = millis();
   if (now - prevMqttUpdateMillis > mqttUpdateDelayMs) {
     prevMqttUpdateMillis = now;
-    // Convert the value to a char array
-    char tempString[8];
-    dtostrf(getTemperature(), 1, 2, tempString);
-    client.publish("esp32/temperature", tempString);
-    // Convert the value to a char array
-    char humString[8];
-    dtostrf(getHumidity(), 1, 2, humString);
-    client.publish("esp32/humidity", humString);
+
+    // Json structure
+    StaticJsonDocument<200> doc;
+    doc["temperature"] = getTemperature();
+    doc["humidity"] = getHumidity();
+
+    char buffer[256];
+    serializeJson(doc, buffer);
+
+    client.publish(mqtt_topic, buffer);
   }
 }

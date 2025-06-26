@@ -3,6 +3,7 @@
 
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include <ArduinoJson.h>
 
 void setupMqttClient();
 void loopMqttClient();

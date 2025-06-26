@@ -1,15 +1,13 @@
+#include "secrets.h"
+#include "WiFiType.h"
 #include "setupWifi.h"
-
-// Replace with your WiFi credentials
-const char* ssid = "";
-const char* password = "";
 
 void setupWifi() {
   display.clearDisplay();
   delay(10);
   display.println("Connecting to WiFi...");
   display.display();
-  WiFi.begin(ssid, password);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   unsigned short retry = 0;
   while (WiFi.status() != WL_CONNECTED && retry < 20) {
@@ -20,17 +18,25 @@ void setupWifi() {
   }
 
   if (WiFi.status() == WL_CONNECTED) {
-    display.println("");
-    display.println("Connected to WiFi."); 
-    display.print("IP: ");
-    display.println(WiFi.localIP());
-    Serial.println("WiFi Connected!");
+    showWifiConnected();
   } else {
-    display.println("");
-    display.println("WiFi not connected.");
-    Serial.println("WiFi not connected");
+    showWifiNotConnected();
   }
-  
+
   display.display();
   delay(5000);
+}
+
+void showWifiConnected() {
+  display.println("");
+  display.println("Connected to WiFi."); 
+  display.print("IP: ");
+  display.println(WiFi.localIP());
+  Serial.println("WiFi Connected!");
+}
+
+void showWifiNotConnected() {
+  display.println("");
+  display.println("WiFi not connected.");
+  Serial.println("WiFi not connected");
 }

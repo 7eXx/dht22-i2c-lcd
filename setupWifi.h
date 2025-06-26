@@ -3,8 +3,11 @@
 
 #include <Adafruit_SSD1306.h>
 #include <WiFi.h>
+#include <secrets.h>
 #include <displayManager.h>
 
 void setupWifi();
+void showWifiConnected();
+void showWifiNotConnected();
 
 #endif
