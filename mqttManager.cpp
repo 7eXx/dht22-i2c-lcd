@@ -72,7 +72,7 @@ void tryPublishUpdates() {
     
     JsonObject temp = doc.createNestedObject("temperature");
     temp["value"] = tempString;
-    temp["unit"] = "°C";
+    temp["unit"] = "C";
 
     JsonObject hum = doc.createNestedObject("humidity");
     hum["value"] = humString;
