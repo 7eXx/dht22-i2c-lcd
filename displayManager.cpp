@@ -58,7 +58,7 @@ void renderDisplay() {
 
   display.setCursor(0, 56);
   display.print("Max Hum: ");
-  display.print(getMaxTemperature());
+  display.print(getMaxHumidity());
   display.print(" %");
 
   display.display();
